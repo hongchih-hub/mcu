@@ -1,1 +1,103 @@
+/* USER CODE BEGIN Header */
+/**
+  ******************************************************************************
+  * @file           : main.c
+  * @brief          : Main program body
+  ******************************************************************************
+  */
+/* USER CODE END Header */
 
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
+
+/* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+
+/**
+  * @brief  The application entry point.
+  * @retval int
+  */
+int main(void)
+{
+  /* MCU Configuration--------------------------------------------------------*/
+  HAL_Init();
+  SystemClock_Config();
+  MX_GPIO_Init();
+
+  /* USER CODE BEGIN 2 */
+
+  // Variables (變數設定)
+  // 【修改點 1】：將初始狀態改為 1，代表一開始先啟動綠燈
+  // 【修改點 2】：Pin 腳互換 -> 0 = Red (PC8), 1 = Green (PC6)
+  int active_led_color = 1;
+
+  int is_led_on = 1;             // 1 = 亮燈週期, 0 = 熄滅週期
+  int button_is_pressed = 0;     // 1 = 按鈕被按著, 0 = 按鈕放開
+
+  uint32_t last_toggle_time = 0; // 記錄上次狀態改變的時間
+  uint32_t blink_interval = 2000;// 初始為綠燈，所以先預設 2000 毫秒
+
+  // 取得初始時間
+  last_toggle_time = HAL_GetTick();
+
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+    /* ===== 1. 偵測按鈕與切換顏色 ===== */
+    if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_12) == GPIO_PIN_RESET)
+    {
+      if (button_is_pressed == 0)
+      {
+        button_is_pressed = 1;
+
+        active_led_color = 1 - active_led_color;   // 切換顏色 (0變1，1變0)
+
+        // 因為兩種燈的時間不同，切換瞬間重新計時，並強制讓新顏色的燈先亮起
+        is_led_on = 1;
+        last_toggle_time = HAL_GetTick();
+
+        HAL_Delay(50);                             // 防彈跳 (Debounce)
+      }
+    }
+    else
+    {
+      button_is_pressed = 0;
+    }
+
+    /* ===== 2. 依照當前的顏色，決定時間間隔 ===== */
+    if (active_led_color == 0)
+    {
+      blink_interval = 500;  // 紅燈的節奏：500 毫秒 (0.5秒)
+    }
+    else
+    {
+      blink_interval = 2000; // 綠燈的節奏：2000 毫秒 (2秒)
+    }
+
+    /* ===== 3. 檢查時間 (依照動態的 blink_interval) ===== */
+    if (HAL_GetTick() - last_toggle_time >= blink_interval)
+    {
+      is_led_on = 1 - is_led_on;                   // 狀態反轉 (亮變滅, 滅變亮)
+      last_toggle_time = HAL_GetTick();            // 重置碼表
+    }
+
+    /* ===== 4. 控制硬體輸出 ===== */
+    if (is_led_on == 1)
+    {
+      // 亮起階段：決定是亮紅燈還是綠燈 (Pin腳已互換)
+      if (active_led_color == 0)
+      {
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);   // 【紅燈 PC8】亮
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_RESET); // 【綠燈 PC6】滅
+      }
+      else
+      {
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET); // 【紅燈 PC8】滅
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);   // 【綠燈 PC6】亮
+      }
+    }
+    else
