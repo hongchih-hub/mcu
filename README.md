@@ -7,7 +7,7 @@
 - [code0915.txt：基本按鈕與多重 LED 狀態切換](#code0915txt基本按鈕與多重-led-狀態切換)
 - [code0922.txt：頻率控制與 LED 閃爍切換](#code0922txt頻率控制與-led-閃爍切換)
 - [code0929.txt：進階狀態機 (Mode/Stop/Reset 控制)](#code0929txt進階狀態機-modestopreset-控制)
-- [code1006.txt：電腦指令控制)](#code1006txt電腦指令控制)
+- [code1006.txt：電腦指令控制](#code1006txt電腦指令控制)
 
 ---
 
